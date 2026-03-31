@@ -115,29 +115,50 @@ function buildRows(json: unknown[]): DataRow[] {
 }
 
 function parseMonthKey(row: DataRow) {
-  const anoMes = String(row["ANO_MÊS"] ?? "").trim();
-  if (anoMes) {
-    const digits = anoMes.replace(/[^0-9]/g, "");
-    if (digits.length >= 6) {
+  const raw = String(row["ANO_MÊS"] ?? "").trim();
+  if (!raw) return "";
+
+  const digits = raw.replace(/[^0-9]/g, "");
+
+  if (digits.length === 6) {
+    const first4 = Number(digits.slice(0, 4));
+    const last2 = Number(digits.slice(4, 6));
+    if (first4 >= 1900 && first4 <= 2100 && last2 >= 1 && last2 <= 12) {
       return `${digits.slice(0, 4)}-${digits.slice(4, 6)}`;
+    }
+
+    const first2 = Number(digits.slice(0, 2));
+    const last4 = Number(digits.slice(2, 6));
+    if (last4 >= 1900 && last4 <= 2100 && first2 >= 1 && first2 <= 12) {
+      return `${digits.slice(2, 6)}-${digits.slice(0, 2).padStart(2, "0")}`;
     }
   }
 
-  const rawDate = row.DATA;
-  if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
-    const y = rawDate.getFullYear();
-    const m = String(rawDate.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
+  if (digits.length === 5) {
+    const month = Number(digits.slice(0, 1));
+    const year = Number(digits.slice(1, 5));
+    if (year >= 1900 && year <= 2100 && month >= 1 && month <= 9) {
+      return `${String(year)}-${String(month).padStart(2, "0")}`;
+    }
   }
 
-  const text = String(rawDate ?? "").trim();
-  if (!text) return "";
+  const iso = raw.match(/^(\d{4})[-_/](\d{1,2})$/);
+  if (iso) {
+    const year = Number(iso[1]);
+    const month = Number(iso[2]);
+    if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12) {
+      return `${String(year)}-${String(month).padStart(2, "0")}`;
+    }
+  }
 
-  const iso = text.match(/^(\d{4})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}`;
-
-  const br = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (br) return `${br[3]}-${br[2]}`;
+  const br = raw.match(/^(\d{1,2})\/(\d{4})$/);
+  if (br) {
+    const month = Number(br[1]);
+    const year = Number(br[2]);
+    if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12) {
+      return `${String(year)}-${String(month).padStart(2, "0")}`;
+    }
+  }
 
   return "";
 }
@@ -410,7 +431,7 @@ export default function App() {
   );
 
   const allMonths = useMemo(
-    () => unique(rows.map((r) => parseMonthKey(r)).filter(Boolean)).sort(),
+    () => unique(rows.map((r) => parseMonthKey(r)).filter(Boolean)).sort((a, b) => a.localeCompare(b)),
     [rows]
   );
 
@@ -430,7 +451,8 @@ export default function App() {
     return filteredBySafra.filter((row) => {
       if (!selectedMonth) return true;
       const key = parseMonthKey(row);
-      return key ? key <= selectedMonth : true;
+      if (!key) return false;
+      return key <= selectedMonth;
     });
   }, [filteredBySafra, selectedMonth]);
 
@@ -659,7 +681,7 @@ export default function App() {
                   <select
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    style={{ width: "100%", minHeight: 44, border: "1px solid #cbd5e1", borderRadius: 16, background: "#fff", padding: "10px 14px 10px 38px" }}
+                    style={{ width: "100%", minHeight: 44, border: "1px solid #cbd5e1", borderRadius: 16, background: "#fff", padding: "10px 14px 10px 38px", appearance: "auto" }}
                   >
                     <option value="">Todos</option>
                     {allMonths.map((month) => (
@@ -731,6 +753,9 @@ export default function App() {
           <div style={{ color: SUBTEXT, marginTop: 8 }}>
             <div>Sem arrendamento e sem desp. corporativa</div>
             <div>* Sem Pecuária</div>
+            <div style={{ marginTop: 6, fontWeight: 600 }}>
+              Acumulado até: {selectedMonth ? monthLabel(selectedMonth) : "Todos os meses"}
+            </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 20 }}>
