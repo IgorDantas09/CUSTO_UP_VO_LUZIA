@@ -181,6 +181,34 @@ function groupRowsBy(rows: DataRow[], keyField: string) {
   return map;
 }
 
+function wrapAxisLabel(label: string, maxCharsPerLine = 14, maxLines = 3) {
+  const words = String(label || "").split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? current + " " + word : word;
+    if (candidate.length <= maxCharsPerLine) {
+      current = candidate;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  }
+
+  if (current) lines.push(current);
+
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    kept[maxLines - 1] = kept[maxLines - 1] + "...";
+    return kept.join("<br>");
+  }
+
+  return lines.join("<br>");
+}
+
 function MultiSelect({
   label,
   options,
@@ -300,7 +328,8 @@ function buildWaterfall(params: {
 }) {
   const { initialLabel, finalLabel, initialValue, finalValue, steps } = params;
 
-  const x = [initialLabel, ...steps.map((s) => s.name), finalLabel];
+  const rawLabels = [initialLabel, ...steps.map((s) => s.name), finalLabel];
+  const x = rawLabels.map((label) => wrapAxisLabel(label));
   const measure: ("absolute" | "relative" | "total")[] = [
     "absolute",
     ...steps.map(() => "relative" as const),
@@ -313,9 +342,9 @@ function buildWaterfall(params: {
     fmtNumber(finalValue, 0),
   ];
   const customdata = [
-    ["", fmtNumber(initialValue, 0)],
-    ...steps.map((s) => [fmtPercent(s.percent, 1), fmtNumber(s.baseValue, 0)]),
-    ["", fmtNumber(finalValue, 0)],
+    ["", fmtNumber(initialValue, 0), initialLabel],
+    ...steps.map((s) => [fmtPercent(s.percent, 1), fmtNumber(s.baseValue, 0), s.name]),
+    ["", fmtNumber(finalValue, 0), finalLabel],
   ];
 
   return { x, measure, y, text, customdata };
@@ -361,7 +390,7 @@ function WaterfallPlot({
             decreasing: { marker: { color: NEGATIVE } },
             totals: { marker: { color: NEUTRAL } },
             hovertemplate:
-              "<b>%{x}</b><br>Valor: %{text}<br>%{customdata[0]}<br>Base: %{customdata[1]}<extra></extra>",
+              "<b>%{customdata[2]}</b><br>Valor: %{text}<br>%{customdata[0]}<br>Base: %{customdata[1]}<extra></extra>",
           } as any,
         ]}
         layout={{
@@ -369,12 +398,12 @@ function WaterfallPlot({
           autosize: true,
           paper_bgcolor: "#ffffff",
           plot_bgcolor: "#ffffff",
-          margin: { l: 40, r: 20, t: 20, b: 130 },
+          margin: { l: 40, r: 20, t: 20, b: 180 },
           showlegend: false,
           xaxis: {
             tickangle: 0,
             automargin: true,
-            tickfont: { size: 12, color: "#475569" },
+            tickfont: { size: 10, color: "#475569" },
           },
           yaxis: {
             visible: false,
@@ -390,8 +419,8 @@ function WaterfallPlot({
         config={{ responsive: true, displayModeBar: false }}
         style={{ width: "100%", height: "100%" }}
         onClick={(event) => {
-          const point = event.points?.[0];
-          const label = String(point?.x ?? "");
+          const point = event.points?.[0] as any;
+          const label = String(point?.customdata?.[2] ?? "");
           if (!label) return;
           if (label === initialLabel || label === finalLabel) return;
           onBarClick?.(label);
