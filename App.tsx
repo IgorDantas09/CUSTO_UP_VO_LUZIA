@@ -55,18 +55,14 @@ const GOLD = "#efb300";
 const OLIVE = "#556f26";
 const TEXT = "#1f2937";
 const SUBTEXT = "#6b7280";
+const BRAND = "#eda66f";
 
 function toNumber(value: unknown): number {
   if (value === null || value === undefined || value === "") return 0;
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-
   const raw = String(value).trim();
   if (!raw) return 0;
-
-  const normalized = raw.includes(",")
-    ? raw.replace(/\./g, "").replace(",", ".")
-    : raw;
-
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -127,7 +123,6 @@ function parseMonthKey(row: DataRow) {
   if (digits.length === 6) {
     const first4 = Number(digits.slice(0, 4));
     const last2 = Number(digits.slice(4, 6));
-
     if (first4 >= 1900 && first4 <= 2100 && last2 >= 1 && last2 <= 12) {
       return `${digits.slice(0, 4)}-${digits.slice(4, 6)}`;
     }
@@ -176,7 +171,6 @@ function monthLabel(monthKey: string) {
 
 function groupRowsBy(rows: DataRow[], keyField: string) {
   const map = new Map<string, { planned: number; actual: number }>();
-
   rows.forEach((row) => {
     const key = String(row[keyField] ?? "").trim() || "Sem grupo";
     const current = map.get(key) ?? { planned: 0, actual: 0 };
@@ -184,7 +178,6 @@ function groupRowsBy(rows: DataRow[], keyField: string) {
     current.actual += toNumber(row.Realizado);
     map.set(key, current);
   });
-
   return map;
 }
 
@@ -232,10 +225,7 @@ function MultiSelect({
 
   return (
     <div style={{ position: "relative" }}>
-      <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
-        {label}
-      </label>
-
+      <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>{label}</label>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -256,8 +246,8 @@ function MultiSelect({
           {selected.length === 0
             ? "Nenhum selecionado"
             : allSelected
-            ? "Todos selecionados"
-            : `${selected.length} selecionado(s)`}
+              ? "Todos selecionados"
+              : `${selected.length} selecionado(s)`}
         </span>
         <ChevronDown size={16} />
       </button>
@@ -279,35 +269,15 @@ function MultiSelect({
           }}
         >
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <button
-              type="button"
-              onClick={() => onChange(options)}
-              style={miniBtnStyle}
-            >
-              Marcar tudo
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange([])}
-              style={miniBtnStyle}
-            >
-              Limpar
-            </button>
+            <button type="button" onClick={() => onChange(options)} style={miniBtnStyle}>Marcar tudo</button>
+            <button type="button" onClick={() => onChange([])} style={miniBtnStyle}>Limpar</button>
           </div>
 
           <div style={{ display: "grid", gap: 8 }}>
             {options.map((option) => {
               const checked = selected.includes(option);
               return (
-                <label
-                  key={option}
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    padding: "6px 8px",
-                  }}
-                >
+                <label key={option} style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 8px" }}>
                   <input
                     type="checkbox"
                     checked={checked}
@@ -360,21 +330,17 @@ function buildWaterfall(params: {
 
   const rawLabels = [initialLabel, ...steps.map((s) => s.name), finalLabel];
   const x = rawLabels.map((label) => wrapAxisLabel(label));
-
   const measure: ("absolute" | "relative" | "total")[] = [
     "absolute",
     ...steps.map(() => "relative" as const),
     "total",
   ];
-
   const y = [initialValue, ...steps.map((s) => s.delta), finalValue];
-
   const text = [
     fmtNumber(initialValue, 0),
     ...steps.map((s) => fmtNumber(s.delta, 0)),
     fmtNumber(finalValue, 0),
   ];
-
   const customdata = [
     ["", fmtNumber(initialValue, 0), initialLabel],
     ...steps.map((s) => [fmtPercent(s.percent, 1), fmtNumber(s.baseValue, 0), s.name]),
@@ -489,10 +455,7 @@ export default function App() {
   );
 
   const allExpenseGroups = useMemo(
-    () =>
-      unique(
-        rows.map((r) => String(r["GRUPO DE DESPESAS"] ?? "").trim()).filter(Boolean)
-      ).sort(),
+    () => unique(rows.map((r) => String(r["GRUPO DE DESPESAS"] ?? "").trim()).filter(Boolean)).sort(),
     [rows]
   );
 
@@ -502,12 +465,7 @@ export default function App() {
   );
 
   const detectedCultures = useMemo(
-    () =>
-      unique(
-        rows
-          .map((r) => extractCultureName(String(r["Centro de Custo"] ?? "")))
-          .filter(Boolean)
-      ).sort(),
+    () => unique(rows.map((r) => extractCultureName(String(r["Centro de Custo"] ?? ""))).filter(Boolean)).sort(),
     [rows]
   );
 
@@ -526,17 +484,6 @@ export default function App() {
       return key <= selectedMonth;
     });
   }, [filteredBySafra, selectedMonth]);
-
-  // ESTE BLOCO É A CORREÇÃO PRINCIPAL
-  // Agora os gráficos 2, 3 e 4 respeitam o filtro de cultura
-  const cultureFilteredAccumulatedRows = useMemo(() => {
-    if (selectedCultures.length === 0) return accumulatedRows;
-
-    return accumulatedRows.filter((row) => {
-      const culture = extractCultureName(String(row["Centro de Custo"] ?? ""));
-      return culture && selectedCultures.includes(culture);
-    });
-  }, [accumulatedRows, selectedCultures]);
 
   const graph1 = useMemo(() => {
     const plannedTotal = sumBy(accumulatedRows, "Planejado");
@@ -562,7 +509,6 @@ export default function App() {
       const planned = hiddenItems.reduce((acc, item) => acc + item.planned, 0);
       const actual = hiddenItems.reduce((acc, item) => acc + item.actual, 0);
       const delta = actual - planned;
-
       steps.push({
         name: "Outros",
         planned,
@@ -584,31 +530,25 @@ export default function App() {
       return culture && (selectedCultures.length === 0 || selectedCultures.includes(culture));
     });
 
-    const grouped = new Map<
-      string,
-      { plannedTotal: number; plannedAccum: number; actualAccum: number }
-    >();
+    const accumulatedCultureRows = accumulatedRows.filter((row) => {
+      const culture = extractCultureName(String(row["Centro de Custo"] ?? ""));
+      return culture && (selectedCultures.length === 0 || selectedCultures.includes(culture));
+    });
+
+    const grouped = new Map<string, { plannedTotal: number; plannedAccum: number; actualAccum: number }>();
 
     plannedTotalRows.forEach((row) => {
       const culture = extractCultureName(String(row["Centro de Custo"] ?? ""));
       if (!culture) return;
-      const current = grouped.get(culture) ?? {
-        plannedTotal: 0,
-        plannedAccum: 0,
-        actualAccum: 0,
-      };
+      const current = grouped.get(culture) ?? { plannedTotal: 0, plannedAccum: 0, actualAccum: 0 };
       current.plannedTotal += toNumber(row.Planejado);
       grouped.set(culture, current);
     });
 
-    cultureFilteredAccumulatedRows.forEach((row) => {
+    accumulatedCultureRows.forEach((row) => {
       const culture = extractCultureName(String(row["Centro de Custo"] ?? ""));
       if (!culture) return;
-      const current = grouped.get(culture) ?? {
-        plannedTotal: 0,
-        plannedAccum: 0,
-        actualAccum: 0,
-      };
+      const current = grouped.get(culture) ?? { plannedTotal: 0, plannedAccum: 0, actualAccum: 0 };
       current.plannedAccum += toNumber(row.Planejado);
       current.actualAccum += toNumber(row.Realizado);
       grouped.set(culture, current);
@@ -624,20 +564,14 @@ export default function App() {
         actualAccumHa: safeDivide(values.actualAccum, area),
       };
     });
-  }, [filteredBySafra, cultureFilteredAccumulatedRows, selectedCultures, areaByCulture]);
+  }, [filteredBySafra, accumulatedRows, selectedCultures, areaByCulture]);
 
   const graph3 = useMemo(() => {
     if (!selectedExpenseGroup) {
-      return {
-        plannedTotal: 0,
-        actualTotal: 0,
-        variation: 0,
-        variationPct: 0,
-        steps: [] as WaterfallStep[],
-      };
+      return { plannedTotal: 0, actualTotal: 0, variation: 0, variationPct: 0, steps: [] as WaterfallStep[] };
     }
 
-    const baseRows = cultureFilteredAccumulatedRows.filter(
+    const baseRows = accumulatedRows.filter(
       (row) => String(row["GRUPO DE DESPESAS"] ?? "").trim() === selectedExpenseGroup
     );
 
@@ -659,20 +593,14 @@ export default function App() {
       .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
     return { plannedTotal, actualTotal, variation, variationPct, steps };
-  }, [cultureFilteredAccumulatedRows, selectedExpenseGroup]);
+  }, [accumulatedRows, selectedExpenseGroup]);
 
   const graph4 = useMemo(() => {
     if (!selectedExpenseGroup || !drillArea) {
-      return {
-        plannedTotal: 0,
-        actualTotal: 0,
-        variation: 0,
-        variationPct: 0,
-        steps: [] as WaterfallStep[],
-      };
+      return { plannedTotal: 0, actualTotal: 0, variation: 0, variationPct: 0, steps: [] as WaterfallStep[] };
     }
 
-    const baseRows = cultureFilteredAccumulatedRows.filter((row) => {
+    const baseRows = accumulatedRows.filter((row) => {
       const expense = String(row["GRUPO DE DESPESAS"] ?? "").trim();
       const area = String(row["Por área"] ?? "").trim() || "Sem grupo";
       return expense === selectedExpenseGroup && area === drillArea;
@@ -696,7 +624,7 @@ export default function App() {
       .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
     return { plannedTotal, actualTotal, variation, variationPct, steps };
-  }, [cultureFilteredAccumulatedRows, selectedExpenseGroup, drillArea]);
+  }, [accumulatedRows, selectedExpenseGroup, drillArea]);
 
   async function handleExcelUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -715,17 +643,9 @@ export default function App() {
 
       setRows(parsed);
 
-      const safras = unique(
-        parsed.map((r) => String(r.Safra ?? "").trim()).filter(Boolean)
-      );
-      const grupoET = unique(
-        parsed.map((r) => String(r.GRUPO_ET ?? "").trim()).filter(Boolean)
-      );
-      const cultures = unique(
-        parsed
-          .map((r) => extractCultureName(String(r["Centro de Custo"] ?? "")))
-          .filter(Boolean)
-      );
+      const safras = unique(parsed.map((r) => String(r.Safra ?? "").trim()).filter(Boolean));
+      const grupoET = unique(parsed.map((r) => String(r.GRUPO_ET ?? "").trim()).filter(Boolean));
+      const cultures = unique(parsed.map((r) => extractCultureName(String(r["Centro de Custo"] ?? ""))).filter(Boolean));
       const months = unique(parsed.map((r) => parseMonthKey(r)).filter(Boolean)).sort();
 
       setSelectedSafras(safras.length ? [safras[safras.length - 1]] : []);
@@ -758,22 +678,9 @@ export default function App() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f1f5f9",
-        padding: 24,
-        fontFamily: "Inter, Arial, sans-serif",
-      }}
-    >
+    <div style={{ minHeight: "100vh", background: "#f1f5f9", padding: 24, fontFamily: "Inter, Arial, sans-serif" }}>
       <div style={{ maxWidth: 1480, margin: "0 auto", display: "grid", gap: 24 }}>
-        <div
-          style={{
-            ...cardStyle,
-            background: "linear-gradient(90deg, #064e3b, #047857)",
-            color: "#fff",
-          }}
-        >
+        <div style={{ ...cardStyle, background: "linear-gradient(90deg, #064e3b, #047857)", color: "#fff" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.9, fontSize: 14 }}>
             <ChartColumnBig size={18} />
             <span>Dashboard Web de Validação de Custos</span>
@@ -786,131 +693,59 @@ export default function App() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 16 }}>
           <div style={cardStyle}>
-            <div style={sectionTitleStyle}>
-              <Upload size={18} />
-              <h2 style={{ margin: 0 }}>Upload da base Excel</h2>
-            </div>
+            <div style={sectionTitleStyle}><Upload size={18} /><h2 style={{ margin: 0 }}>Upload da base Excel</h2></div>
             <input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} />
-            <div style={{ marginTop: 10, color: SUBTEXT, fontSize: 14 }}>
-              {fileName || "Nenhum arquivo enviado"}
-            </div>
+            <div style={{ marginTop: 10, color: SUBTEXT, fontSize: 14 }}>{fileName || "Nenhum arquivo enviado"}</div>
             {error ? <div style={{ marginTop: 12, color: "#b91c1c" }}>{error}</div> : null}
           </div>
 
           <div style={cardStyle}>
-            <div style={sectionTitleStyle}>
-              <Filter size={18} />
-              <h2 style={{ margin: 0 }}>Filtros principais</h2>
-            </div>
-
+            <div style={sectionTitleStyle}><Filter size={18} /><h2 style={{ margin: 0 }}>Filtros principais</h2></div>
             <div style={{ display: "grid", gap: 14 }}>
-              <MultiSelect
-                label="Safra"
-                options={allSafras}
-                selected={selectedSafras}
-                onChange={setSelectedSafras}
-              />
-
+              <MultiSelect label="Safra" options={allSafras} selected={selectedSafras} onChange={setSelectedSafras} />
               <div>
-                <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
-                  Mês acumulado
-                </label>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>Mês acumulado</label>
                 <div style={{ position: "relative" }}>
-                  <Calendar
-                    size={16}
-                    style={{ position: "absolute", left: 12, top: 14, color: SUBTEXT }}
-                  />
+                  <Calendar size={16} style={{ position: "absolute", left: 12, top: 14, color: SUBTEXT }} />
                   <select
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    style={{
-                      width: "100%",
-                      minHeight: 44,
-                      border: "1px solid #cbd5e1",
-                      borderRadius: 16,
-                      background: "#fff",
-                      padding: "10px 14px 10px 38px",
-                      appearance: "auto",
-                    }}
+                    style={{ width: "100%", minHeight: 44, border: "1px solid #cbd5e1", borderRadius: 16, background: "#fff", padding: "10px 14px 10px 38px", appearance: "auto" }}
                   >
                     <option value="">Todos</option>
                     {allMonths.map((month) => (
-                      <option key={month} value={month}>
-                        {monthLabel(month)}
-                      </option>
+                      <option key={month} value={month}>{monthLabel(month)}</option>
                     ))}
                   </select>
                 </div>
               </div>
-
               <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={showOthers}
-                  onChange={(e) => setShowOthers(e.target.checked)}
-                />
+                <input type="checkbox" checked={showOthers} onChange={(e) => setShowOthers(e.target.checked)} />
                 <span>Agrupar não selecionados como “Outros”</span>
               </label>
-
-              <button
-                type="button"
-                onClick={resetFilters}
-                style={{
-                  ...miniBtnStyle,
-                  background: "#0f172a",
-                  color: "#fff",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
+              <button type="button" onClick={resetFilters} style={{ ...miniBtnStyle, background: "#0f172a", color: "#fff", display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <RefreshCcw size={16} /> Resetar filtros
               </button>
             </div>
           </div>
 
           <div style={cardStyle}>
-            <div style={sectionTitleStyle}>
-              <Wheat size={18} />
-              <h2 style={{ margin: 0 }}>Área plantada por cultura</h2>
-            </div>
-
+            <div style={sectionTitleStyle}><Wheat size={18} /><h2 style={{ margin: 0 }}>Área plantada por cultura</h2></div>
             <div style={{ display: "grid", gap: 12 }}>
               {detectedCultures.length === 0 ? (
-                <div style={{ color: SUBTEXT }}>
-                  Após subir a planilha, as culturas detectadas aparecerão aqui.
-                </div>
+                <div style={{ color: SUBTEXT }}>Após subir a planilha, as culturas detectadas aparecerão aqui.</div>
               ) : (
                 detectedCultures.map((culture) => (
-                  <div
-                    key={culture}
-                    style={{
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 16,
-                      padding: 12,
-                      background: "#f8fafc",
-                    }}
-                  >
+                  <div key={culture} style={{ border: "1px solid #e2e8f0", borderRadius: 16, padding: 12, background: "#f8fafc" }}>
                     <div style={{ fontWeight: 700, marginBottom: 8 }}>{culture}</div>
                     <input
                       type="number"
                       min={0}
                       step="0.01"
                       value={areaByCulture[culture] ?? ""}
-                      onChange={(e) =>
-                        setAreaByCulture((prev) => ({
-                          ...prev,
-                          [culture]: Number(e.target.value || 0),
-                        }))
-                      }
+                      onChange={(e) => setAreaByCulture((prev) => ({ ...prev, [culture]: Number(e.target.value || 0) }))}
                       placeholder="Área plantada (ha)"
-                      style={{
-                        width: "100%",
-                        minHeight: 42,
-                        border: "1px solid #cbd5e1",
-                        borderRadius: 14,
-                        padding: "10px 12px",
-                      }}
+                      style={{ width: "100%", minHeight: 42, border: "1px solid #cbd5e1", borderRadius: 14, padding: "10px 12px" }}
                     />
                   </div>
                 ))
@@ -921,44 +756,21 @@ export default function App() {
 
         <div style={cardStyle}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-            <MultiSelect
-              label="GRUPO_ET visível no gráfico 1"
-              options={allGrupoET}
-              selected={selectedGrupoET}
-              onChange={setSelectedGrupoET}
-            />
-
-            <MultiSelect
-              label="Culturas para o gráfico 2"
-              options={detectedCultures}
-              selected={selectedCultures}
-              onChange={setSelectedCultures}
-            />
-
+            <MultiSelect label="GRUPO_ET visível no gráfico 1" options={allGrupoET} selected={selectedGrupoET} onChange={setSelectedGrupoET} />
+            <MultiSelect label="Culturas para o gráfico 2" options={detectedCultures} selected={selectedCultures} onChange={setSelectedCultures} />
             <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>
-                GRUPO DE DESPESAS do gráfico 3
-              </label>
+              <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>GRUPO DE DESPESAS do gráfico 3</label>
               <select
                 value={selectedExpenseGroup}
                 onChange={(e) => {
                   setSelectedExpenseGroup(e.target.value);
                   setDrillArea("");
                 }}
-                style={{
-                  width: "100%",
-                  minHeight: 44,
-                  border: "1px solid #cbd5e1",
-                  borderRadius: 16,
-                  background: "#fff",
-                  padding: "10px 14px",
-                }}
+                style={{ width: "100%", minHeight: 44, border: "1px solid #cbd5e1", borderRadius: 16, background: "#fff", padding: "10px 14px" }}
               >
                 <option value="">Selecione um grupo de despesas</option>
                 {allExpenseGroups.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
+                  <option key={item} value={item}>{item}</option>
                 ))}
               </select>
             </div>
@@ -975,80 +787,16 @@ export default function App() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
-              marginTop: 20,
-            }}
-          >
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 40, fontWeight: 900 }}>
-                {fmtNumber(graph1.plannedTotal, 0)}
-              </div>
-              <div style={{ color: SUBTEXT }}>Orçado Acum.</div>
-            </div>
-
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  fontSize: 40,
-                  fontWeight: 900,
-                  color: graph1.variation >= 0 ? "#dc2626" : "#16a34a",
-                }}
-              >
-                {fmtNumber(graph1.variation, 0)}
-              </div>
-              <div style={{ color: SUBTEXT }}>Variação</div>
-            </div>
-
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  fontSize: 40,
-                  fontWeight: 900,
-                  color: graph1.variationPct >= 0 ? "#dc2626" : "#16a34a",
-                }}
-              >
-                {fmtPercent(graph1.variationPct, 1)}
-              </div>
-              <div style={{ color: SUBTEXT }}>%</div>
-            </div>
-
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 40, fontWeight: 900 }}>
-                {fmtNumber(graph1.actualTotal, 0)}
-              </div>
-              <div style={{ color: SUBTEXT }}>Real Acum.</div>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 20 }}>
+            <div style={{ textAlign: "center" }}><div style={{ fontSize: 40, fontWeight: 900 }}>{fmtNumber(graph1.plannedTotal, 0)}</div><div style={{ color: SUBTEXT }}>Orçado Acum.</div></div>
+            <div style={{ textAlign: "center" }}><div style={{ fontSize: 40, fontWeight: 900, color: graph1.variation >= 0 ? "#dc2626" : "#16a34a" }}>{fmtNumber(graph1.variation, 0)}</div><div style={{ color: SUBTEXT }}>Variação</div></div>
+            <div style={{ textAlign: "center" }}><div style={{ fontSize: 40, fontWeight: 900, color: graph1.variationPct >= 0 ? "#dc2626" : "#16a34a" }}>{fmtPercent(graph1.variationPct, 1)}</div><div style={{ color: SUBTEXT }}>%</div></div>
+            <div style={{ textAlign: "center" }}><div style={{ fontSize: 40, fontWeight: 900 }}>{fmtNumber(graph1.actualTotal, 0)}</div><div style={{ color: SUBTEXT }}>Real Acum.</div></div>
           </div>
 
           <div style={{ display: "flex", gap: 16, marginTop: 16, color: SUBTEXT }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 999,
-                  background: POSITIVE,
-                  display: "inline-block",
-                }}
-              />
-              Aumento
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 999,
-                  background: NEGATIVE,
-                  display: "inline-block",
-                }}
-              />
-              Diminuição
-            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 12, height: 12, borderRadius: 999, background: POSITIVE, display: "inline-block" }} />Aumento</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 12, height: 12, borderRadius: 999, background: NEGATIVE, display: "inline-block" }} />Diminuição</div>
           </div>
 
           <WaterfallPlot
@@ -1061,48 +809,24 @@ export default function App() {
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 12 }}>
-            Gráfico 2 - Custo por Produção
-          </div>
-          <div style={{ color: SUBTEXT, marginBottom: 16 }}>
-            Orçado Total Safra, Orçado Acumulado e Realizado Acumulado em R$/ha
-          </div>
-
+          <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 12 }}>Gráfico 2 - Custo por Produção</div>
+          <div style={{ color: SUBTEXT, marginBottom: 16 }}>Orçado Total Safra, Orçado Acumulado e Realizado Acumulado em R$/ha</div>
           <div style={{ height: 500 }}>
             <ResponsiveContainer>
-              <BarChart
-                data={graph2Data}
-                margin={{ top: 30, right: 20, left: 10, bottom: 20 }}
-                barGap={10}
-              >
+              <BarChart data={graph2Data} margin={{ top: 30, right: 20, left: 10, bottom: 20 }} barGap={10}>
                 <CartesianGrid stroke="#ececec" vertical={false} />
                 <XAxis dataKey="culture" tick={{ fill: TEXT, fontSize: 13 }} />
-                <YAxis
-                  tick={{ fill: SUBTEXT, fontSize: 12 }}
-                  tickFormatter={(v) => fmtNumber(v as number, 0)}
-                />
+                <YAxis tick={{ fill: SUBTEXT, fontSize: 12 }} tickFormatter={(v) => fmtNumber(v as number, 0)} />
                 <Tooltip formatter={(value: any, name: string) => [fmtNumber(Number(value), 2), name]} />
                 <Legend />
                 <Bar dataKey="plannedTotalHa" name="Orçado Total Safra (R$/ha)" fill={BROWN}>
-                  <LabelList
-                    dataKey="plannedTotalHa"
-                    position="top"
-                    formatter={(v: number) => fmtNumber(v, 0)}
-                  />
+                  <LabelList dataKey="plannedTotalHa" position="top" formatter={(v: number) => fmtNumber(v, 0)} />
                 </Bar>
                 <Bar dataKey="plannedAccumHa" name="Orçado Acum. (R$/ha)" fill={GOLD}>
-                  <LabelList
-                    dataKey="plannedAccumHa"
-                    position="top"
-                    formatter={(v: number) => fmtNumber(v, 0)}
-                  />
+                  <LabelList dataKey="plannedAccumHa" position="top" formatter={(v: number) => fmtNumber(v, 0)} />
                 </Bar>
                 <Bar dataKey="actualAccumHa" name="Real Acum. (R$/ha)" fill={OLIVE}>
-                  <LabelList
-                    dataKey="actualAccumHa"
-                    position="top"
-                    formatter={(v: number) => fmtNumber(v, 0)}
-                  />
+                  <LabelList dataKey="actualAccumHa" position="top" formatter={(v: number) => fmtNumber(v, 0)} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -1110,68 +834,16 @@ export default function App() {
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 28, fontWeight: 900 }}>
-            Gráfico 3 - Orçado x Realizado por Área
-          </div>
-          <div style={{ color: SUBTEXT, marginTop: 8 }}>
-            Selecione um GRUPO DE DESPESAS para ver a cascata por Por área.
-          </div>
-          <div style={{ color: SUBTEXT, marginTop: 4 }}>
-            Filtro de cultura aplicado:{" "}
-            {selectedCultures.length > 0 ? selectedCultures.join(", ") : "Todas"}
-          </div>
-
+          <div style={{ fontSize: 28, fontWeight: 900 }}>Gráfico 3 - Orçado x Realizado por Área</div>
+          <div style={{ color: SUBTEXT, marginTop: 8 }}>Selecione um GRUPO DE DESPESAS para ver a cascata por Por área.</div>
           {selectedExpenseGroup ? (
             <>
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 16,
-                }}
-              >
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 34, fontWeight: 900 }}>
-                    {fmtNumber(graph3.plannedTotal, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Orçado</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 900,
-                      color: graph3.variation >= 0 ? "#dc2626" : "#16a34a",
-                    }}
-                  >
-                    {fmtNumber(graph3.variation, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Variação</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 900,
-                      color: graph3.variationPct >= 0 ? "#dc2626" : "#16a34a",
-                    }}
-                  >
-                    {fmtPercent(graph3.variationPct, 1)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>%</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 34, fontWeight: 900 }}>
-                    {fmtNumber(graph3.actualTotal, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Realizado</div>
-                </div>
+              <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900 }}>{fmtNumber(graph3.plannedTotal, 0)}</div><div style={{ color: SUBTEXT }}>Orçado</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900, color: graph3.variation >= 0 ? "#dc2626" : "#16a34a" }}>{fmtNumber(graph3.variation, 0)}</div><div style={{ color: SUBTEXT }}>Variação</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900, color: graph3.variationPct >= 0 ? "#dc2626" : "#16a34a" }}>{fmtPercent(graph3.variationPct, 1)}</div><div style={{ color: SUBTEXT }}>%</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900 }}>{fmtNumber(graph3.actualTotal, 0)}</div><div style={{ color: SUBTEXT }}>Realizado</div></div>
               </div>
-
               <WaterfallPlot
                 initialLabel="Orçado"
                 finalLabel="Realizado"
@@ -1182,77 +854,23 @@ export default function App() {
               />
             </>
           ) : (
-            <div style={{ marginTop: 16, color: SUBTEXT }}>
-              Selecione um grupo de despesas no filtro superior.
-            </div>
+            <div style={{ marginTop: 16, color: SUBTEXT }}>Selecione um grupo de despesas no filtro superior.</div>
           )}
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 28, fontWeight: 900 }}>
-            Gráfico 4 - Detalhamento por Sub_Grupo_CC
-          </div>
+          <div style={{ fontSize: 28, fontWeight: 900 }}>Gráfico 4 - Detalhamento por Sub_Grupo_CC</div>
           <div style={{ color: SUBTEXT, marginTop: 8 }}>
-            {drillArea
-              ? `Área selecionada no gráfico 3: ${drillArea}`
-              : "Clique em uma barra do gráfico 3 para abrir o detalhamento."}
+            {drillArea ? `Área selecionada no gráfico 3: ${drillArea}` : "Clique em uma barra do gráfico 3 para abrir o detalhamento."}
           </div>
-          <div style={{ color: SUBTEXT, marginTop: 4 }}>
-            Filtro de cultura aplicado:{" "}
-            {selectedCultures.length > 0 ? selectedCultures.join(", ") : "Todas"}
-          </div>
-
           {drillArea ? (
             <>
-              <div
-                style={{
-                  marginTop: 16,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 16,
-                }}
-              >
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 34, fontWeight: 900 }}>
-                    {fmtNumber(graph4.plannedTotal, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Orçado</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 900,
-                      color: graph4.variation >= 0 ? "#dc2626" : "#16a34a",
-                    }}
-                  >
-                    {fmtNumber(graph4.variation, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Variação</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 900,
-                      color: graph4.variationPct >= 0 ? "#dc2626" : "#16a34a",
-                    }}
-                  >
-                    {fmtPercent(graph4.variationPct, 1)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>%</div>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 34, fontWeight: 900 }}>
-                    {fmtNumber(graph4.actualTotal, 0)}
-                  </div>
-                  <div style={{ color: SUBTEXT }}>Realizado</div>
-                </div>
+              <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900 }}>{fmtNumber(graph4.plannedTotal, 0)}</div><div style={{ color: SUBTEXT }}>Orçado</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900, color: graph4.variation >= 0 ? "#dc2626" : "#16a34a" }}>{fmtNumber(graph4.variation, 0)}</div><div style={{ color: SUBTEXT }}>Variação</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900, color: graph4.variationPct >= 0 ? "#dc2626" : "#16a34a" }}>{fmtPercent(graph4.variationPct, 1)}</div><div style={{ color: SUBTEXT }}>%</div></div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 34, fontWeight: 900 }}>{fmtNumber(graph4.actualTotal, 0)}</div><div style={{ color: SUBTEXT }}>Realizado</div></div>
               </div>
-
               <WaterfallPlot
                 initialLabel="Orçado"
                 finalLabel="Realizado"
@@ -1262,9 +880,7 @@ export default function App() {
               />
             </>
           ) : (
-            <div style={{ marginTop: 16, color: SUBTEXT }}>
-              Nenhuma área selecionada ainda.
-            </div>
+            <div style={{ marginTop: 16, color: SUBTEXT }}>Nenhuma área selecionada ainda.</div>
           )}
         </div>
       </div>
